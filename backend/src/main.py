@@ -68,10 +68,10 @@ def on_startup():
 
 
 # Routers
-app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
-app.include_router(users.router, prefix="/api/v1/users", tags=["users"])
-app.include_router(transactions.router, prefix="/api/v1/transactions", tags=["transactions"])
-app.include_router(admin.router, prefix="/api/v1/admin", tags=["admin"])
-app.include_router(explorer.router, prefix="/api/v1/explorer", tags=["explorer"])
-app.include_router(market.router, prefix="/api/v1/market", tags=["market"])
-app.include_router(websocket.router, prefix="/api/v1/ws", tags=["websocket"])
+app.include_router(auth, prefix="/api/v1/auth", tags=["auth"])
+app.include_router(users, prefix="/api/v1/users", tags=["users"])
+app.include_router(transactions, prefix="/api/v1/transactions", tags=["transactions"])
+app.include_router(admin, prefix="/api/v1/admin", tags=["admin"])
+app.include_router(explorer, prefix="/api/v1/explorer", tags=["explorer"])
+app.include_router(market, prefix="/api/v1/market", tags=["market"])
+app.include_router(websocket, prefix="/api/v1/ws", tags=["websocket"])
