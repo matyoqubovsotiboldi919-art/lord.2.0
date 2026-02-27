@@ -10,6 +10,7 @@ from src.services.security import hash_password
 
 from src.routers import auth, users, transactions, admin, explorer, market, websocket
 
+
 app = FastAPI(title="LORD 2.0")
 
 app.add_middleware(
@@ -21,7 +22,22 @@ app.add_middleware(
 )
 
 
+@app.get("/")
+def home():
+    # Render healthcheck uchun: endi / 404 bo'lmaydi
+    return {"status": "ok", "service": "LORD 2.0"}
+
+
 def seed_admin_user() -> None:
+    """
+    MUHIM:
+    - Admin seed DEFAULT O'CHIQ (ADMIN_SEED_ENABLED=1 bo'lmasa umuman seed qilmaydi)
+    - Shuning uchun deploy hech qachon seed sababli yiqilmaydi.
+    """
+    if os.getenv("ADMIN_SEED_ENABLED", "0") != "1":
+        print("[startup] ADMIN_SEED_ENABLED!=1 -> skip admin seeding")
+        return
+
     admin_email = os.getenv("ADMIN_EMAIL", "admin@lord.local")
     admin_password = os.getenv("ADMIN_PASSWORD", "")
 
@@ -29,6 +45,7 @@ def seed_admin_user() -> None:
         print("[startup] ADMIN_PASSWORD not set -> skip admin seeding")
         return
 
+    # bcrypt limit: 72 bytes
     if len(admin_password.encode("utf-8")) > 72:
         print("[startup] ADMIN_PASSWORD too long (>72 bytes) -> skip admin seeding")
         return
@@ -51,7 +68,8 @@ def seed_admin_user() -> None:
         print("[startup] Admin seeded successfully")
     except Exception as e:
         db.rollback()
-        print(f"[startup] Admin seed failed: {e}")
+        # Hech qachon appni yiqitmaymiz:
+        print(f"[startup] Admin seed failed (non-fatal): {e}")
     finally:
         db.close()
 
@@ -61,6 +79,7 @@ def on_startup():
     seed_admin_user()
 
 
+# Routers (prefixlar routerlar ichida bo'lsa, bu yerda bermaymiz)
 app.include_router(auth)
 app.include_router(users)
 app.include_router(transactions)
