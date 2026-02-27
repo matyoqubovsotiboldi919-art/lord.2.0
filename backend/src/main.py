@@ -4,11 +4,10 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from src.core.config import settings
 from src.db.session import SessionLocal
-from src.models.user import User  # sizda User modeli bor deb hisoblayman
+from src.models.user import User
 from src.services.security import hash_password
 
 from src.routers import auth, users, transactions, admin, explorer, market, websocket
-
 
 app = FastAPI(title="LORD 2.0")
 
@@ -34,7 +33,6 @@ def seed_admin_user() -> None:
         print("[startup] ADMIN_PASSWORD not set -> skip admin seeding")
         return
 
-    # bcrypt 72 bytes limit: ASCII ishlatsak 1 char ~ 1 byte
     if len(admin_password.encode("utf-8")) > 72:
         print("[startup] ADMIN_PASSWORD too long (>72 bytes) -> skip admin seeding")
         return
@@ -68,10 +66,11 @@ def on_startup():
 
 
 # Routers
-app.include_router(auth, prefix="/api/v1/auth", tags=["auth"])
-app.include_router(users, prefix="/api/v1/users", tags=["users"])
-app.include_router(transactions, prefix="/api/v1/transactions", tags=["transactions"])
-app.include_router(admin, prefix="/api/v1/admin", tags=["admin"])
-app.include_router(explorer, prefix="/api/v1/explorer", tags=["explorer"])
-app.include_router(market, prefix="/api/v1/market", tags=["market"])
-app.include_router(websocket, prefix="/api/v1/ws", tags=["websocket"])
+# Eslatma: routerlarning o'zida prefix/tags bo'lsa, bu yerda prefix/tags bermaymiz.
+app.include_router(auth)
+app.include_router(users)
+app.include_router(transactions)
+app.include_router(admin)
+app.include_router(explorer)
+app.include_router(market)
+app.include_router(websocket)
