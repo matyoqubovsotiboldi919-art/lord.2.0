@@ -1,8 +1,10 @@
 # backend/src/main.py
 import os
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from src.db.session import SessionLocal
 from src.models.user import User
@@ -13,6 +15,8 @@ from src.routers import auth, users, transactions, admin, explorer, market, webs
 
 app = FastAPI(title="LORD 2.0")
 
+
+# ✅ CORS (frontend boshqa domen bo'lsa ham ishlasin)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -22,8 +26,9 @@ app.add_middleware(
 )
 
 
-@app.get("/")
-def home():
+# ✅ API health (frontendni / ga ulaganimiz uchun health alohida bo'ladi)
+@app.get("/api/health")
+def health():
     return {"status": "ok", "service": "LORD 2.0"}
 
 
@@ -32,7 +37,7 @@ def seed_admin_user() -> None:
     Admin seed:
     - Default OFF (ADMIN_SEED_ENABLED=1 bo'lmasa seed qilmaydi)
     - Hech qachon appni yiqitmaydi
-    - username NOT NULL bo'lgani uchun ADMIN_USERNAME ham beradi
+    - users.username NOT NULL bo'lgani uchun ADMIN_USERNAME ham beradi
     """
     if os.getenv("ADMIN_SEED_ENABLED", "0") != "1":
         print("[startup] ADMIN_SEED_ENABLED!=1 -> skip admin seeding")
@@ -51,7 +56,6 @@ def seed_admin_user() -> None:
         print("[startup] ADMIN_PASSWORD too long (>72 bytes) -> skip admin seeding")
         return
 
-    # username ham bo'sh bo'lib qolmasin
     if not admin_username:
         admin_username = "admin"
 
@@ -63,7 +67,7 @@ def seed_admin_user() -> None:
             return
 
         u = User(
-            username=admin_username,          # ✅ NOT NULL fix
+            username=admin_username,
             email=admin_email,
             hashed_password=hash_password(admin_password),
             is_admin=True,
@@ -84,7 +88,7 @@ def on_startup():
     seed_admin_user()
 
 
-# Routers
+# ✅ Routers
 app.include_router(auth)
 app.include_router(users)
 app.include_router(transactions)
@@ -92,3 +96,15 @@ app.include_router(admin)
 app.include_router(explorer)
 app.include_router(market)
 app.include_router(websocket)
+
+
+# ✅ FRONTEND (LORD/frontend) ni / ga chiqaramiz
+# /docs, /openapi.json, /api/... route'lar ishlayveradi
+BASE_DIR = Path(__file__).resolve().parents[2]   # .../backend/src/main.py -> LORD/
+FRONTEND_DIR = BASE_DIR / "frontend"
+
+if FRONTEND_DIR.exists():
+    app.mount("/", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")
+    print(f"[startup] Frontend mounted from: {FRONTEND_DIR}")
+else:
+    print(f"[startup] Frontend folder not found: {FRONTEND_DIR}")
