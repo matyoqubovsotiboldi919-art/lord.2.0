@@ -24,22 +24,23 @@ app.add_middleware(
 
 @app.get("/")
 def home():
-    # Render healthcheck uchun: endi / 404 bo'lmaydi
     return {"status": "ok", "service": "LORD 2.0"}
 
 
 def seed_admin_user() -> None:
     """
-    MUHIM:
-    - Admin seed DEFAULT O'CHIQ (ADMIN_SEED_ENABLED=1 bo'lmasa umuman seed qilmaydi)
-    - Shuning uchun deploy hech qachon seed sababli yiqilmaydi.
+    Admin seed:
+    - Default OFF (ADMIN_SEED_ENABLED=1 bo'lmasa seed qilmaydi)
+    - Hech qachon appni yiqitmaydi
+    - username NOT NULL bo'lgani uchun ADMIN_USERNAME ham beradi
     """
     if os.getenv("ADMIN_SEED_ENABLED", "0") != "1":
         print("[startup] ADMIN_SEED_ENABLED!=1 -> skip admin seeding")
         return
 
-    admin_email = os.getenv("ADMIN_EMAIL", "admin@lord.local")
+    admin_email = os.getenv("ADMIN_EMAIL", "admin@lord.local").strip()
     admin_password = os.getenv("ADMIN_PASSWORD", "")
+    admin_username = os.getenv("ADMIN_USERNAME", "admin").strip()
 
     if not admin_password:
         print("[startup] ADMIN_PASSWORD not set -> skip admin seeding")
@@ -50,6 +51,10 @@ def seed_admin_user() -> None:
         print("[startup] ADMIN_PASSWORD too long (>72 bytes) -> skip admin seeding")
         return
 
+    # username ham bo'sh bo'lib qolmasin
+    if not admin_username:
+        admin_username = "admin"
+
     db = SessionLocal()
     try:
         exists = db.query(User).filter(User.email == admin_email).first()
@@ -58,6 +63,7 @@ def seed_admin_user() -> None:
             return
 
         u = User(
+            username=admin_username,          # ✅ NOT NULL fix
             email=admin_email,
             hashed_password=hash_password(admin_password),
             is_admin=True,
@@ -68,7 +74,6 @@ def seed_admin_user() -> None:
         print("[startup] Admin seeded successfully")
     except Exception as e:
         db.rollback()
-        # Hech qachon appni yiqitmaymiz:
         print(f"[startup] Admin seed failed (non-fatal): {e}")
     finally:
         db.close()
@@ -79,7 +84,7 @@ def on_startup():
     seed_admin_user()
 
 
-# Routers (prefixlar routerlar ichida bo'lsa, bu yerda bermaymiz)
+# Routers
 app.include_router(auth)
 app.include_router(users)
 app.include_router(transactions)
