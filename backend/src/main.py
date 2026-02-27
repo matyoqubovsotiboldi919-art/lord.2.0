@@ -1,8 +1,9 @@
 # backend/src/main.py
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.core.config import settings
 from src.db.session import SessionLocal
 from src.models.user import User
 from src.services.security import hash_password
@@ -21,13 +22,9 @@ app.add_middleware(
 
 
 def seed_admin_user() -> None:
-    """
-    Admin user seed:
-    - ADMIN_PASSWORD yo‘q bo‘lsa: seed qilmaydi (server yiqilmaydi)
-    - ADMIN_PASSWORD 72 bytesdan uzun bo‘lsa: seed qilmaydi (server yiqilmaydi)
-    """
-    admin_email = getattr(settings, "ADMIN_EMAIL", "admin@lord.local")
-    admin_password = getattr(settings, "ADMIN_PASSWORD", None)
+    # ENV dan to‘g‘ridan-to‘g‘ri o‘qiymiz (settings chalkashligini chetlab o‘tamiz)
+    admin_email = os.getenv("ADMIN_EMAIL", "admin@lord.local")
+    admin_password = os.getenv("ADMIN_PASSWORD", "")
 
     if not admin_password:
         print("[startup] ADMIN_PASSWORD not set -> skip admin seeding")
@@ -65,8 +62,7 @@ def on_startup():
     seed_admin_user()
 
 
-# Routers
-# Eslatma: routerlarning o'zida prefix/tags bo'lsa, bu yerda prefix/tags bermaymiz.
+# Routers (prefixlarni routerlar o'zida qoldiramiz)
 app.include_router(auth)
 app.include_router(users)
 app.include_router(transactions)
