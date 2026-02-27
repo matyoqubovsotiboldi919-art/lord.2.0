@@ -22,7 +22,6 @@ app.add_middleware(
 
 
 def seed_admin_user() -> None:
-    # ENV dan to‘g‘ridan-to‘g‘ri o‘qiymiz (settings chalkashligini chetlab o‘tamiz)
     admin_email = os.getenv("ADMIN_EMAIL", "admin@lord.local")
     admin_password = os.getenv("ADMIN_PASSWORD", "")
 
@@ -62,7 +61,6 @@ def on_startup():
     seed_admin_user()
 
 
-# Routers (prefixlarni routerlar o'zida qoldiramiz)
 app.include_router(auth)
 app.include_router(users)
 app.include_router(transactions)
