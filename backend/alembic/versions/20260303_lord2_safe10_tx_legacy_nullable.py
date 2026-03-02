@@ -16,39 +16,33 @@ def upgrade() -> None:
     op.execute("""
     DO $$
     BEGIN
-      -- sender_id legacy (int fk) -> allow null
       IF EXISTS (
         SELECT 1 FROM information_schema.columns
         WHERE table_schema='public' AND table_name='transactions' AND column_name='sender_id'
       ) THEN
         BEGIN
           ALTER TABLE transactions ALTER COLUMN sender_id DROP NOT NULL;
-        EXCEPTION WHEN others THEN
-          NULL;
+        EXCEPTION WHEN others THEN NULL;
         END;
       END IF;
 
-      -- receiver_id legacy (int fk) -> allow null
       IF EXISTS (
         SELECT 1 FROM information_schema.columns
         WHERE table_schema='public' AND table_name='transactions' AND column_name='receiver_id'
       ) THEN
         BEGIN
           ALTER TABLE transactions ALTER COLUMN receiver_id DROP NOT NULL;
-        EXCEPTION WHEN others THEN
-          NULL;
+        EXCEPTION WHEN others THEN NULL;
         END;
       END IF;
 
-      -- sometimes legacy schemas use "sender" / "receiver"
       IF EXISTS (
         SELECT 1 FROM information_schema.columns
         WHERE table_schema='public' AND table_name='transactions' AND column_name='sender'
       ) THEN
         BEGIN
           ALTER TABLE transactions ALTER COLUMN sender DROP NOT NULL;
-        EXCEPTION WHEN others THEN
-          NULL;
+        EXCEPTION WHEN others THEN NULL;
         END;
       END IF;
 
@@ -58,15 +52,12 @@ def upgrade() -> None:
       ) THEN
         BEGIN
           ALTER TABLE transactions ALTER COLUMN receiver DROP NOT NULL;
-        EXCEPTION WHEN others THEN
-          NULL;
+        EXCEPTION WHEN others THEN NULL;
         END;
       END IF;
-
     END $$;
     """)
 
 
 def downgrade() -> None:
-    # legacy compat migration; no safe downgrade
     pass

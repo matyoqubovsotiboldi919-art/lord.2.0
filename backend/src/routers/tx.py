@@ -12,11 +12,7 @@ router = APIRouter(prefix="/api/v1/tx", tags=["transactions"])
 
 
 @router.post("/transfer")
-def do_transfer(
-    payload: TransferIn,
-    db: Session = Depends(get_db),
-    me: User = Depends(get_current_user),
-):
+def do_transfer(payload: TransferIn, db: Session = Depends(get_db), me: User = Depends(get_current_user)):
     if me.status == "FROZEN":
         raise HTTPException(status_code=403, detail="Account frozen")
 
@@ -24,15 +20,12 @@ def do_transfer(
         tx = transfer(db, me, payload.receiver_address, payload.amount_usdt, method="WEB_UI")
         db.commit()
         return {"ok": True, "tx_hash": tx.tx_hash}
-
     except PermissionError as e:
         db.rollback()
         raise HTTPException(status_code=403, detail=str(e))
-
     except ValueError as e:
         db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
-
     except Exception:
         db.rollback()
         raise
