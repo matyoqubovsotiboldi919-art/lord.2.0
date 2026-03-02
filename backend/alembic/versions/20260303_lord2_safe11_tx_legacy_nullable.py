@@ -6,8 +6,8 @@ Create Date: 2026-03-03
 """
 from alembic import op
 
-revision = "20260303_lord2_safe10"
-down_revision = "9f76d23e8bb0"
+revision = "20260303_lord2_safe11"
+down_revision = "20260303_lord2_safe10"
 branch_labels = None
 depends_on = None
 
