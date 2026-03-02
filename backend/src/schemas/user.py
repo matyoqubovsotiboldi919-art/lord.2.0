@@ -1,13 +1,10 @@
 from pydantic import BaseModel, EmailStr
 
 
-class UserOut(BaseModel):
-    id: int
-    username: str
+class MeOut(BaseModel):
+    public_id: str
+    address: str
     email: EmailStr
-    is_admin: bool
-    is_active: bool
-    balance: float
-
-    class Config:
-        from_attributes = True
+    balance_usdt: str
+    status: str
+    role: str

@@ -1,313 +1,132 @@
 <!doctype html>
-<html lang="uz">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>LORD • Exchange UI</title>
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-
-  <link rel="stylesheet" href="./styles.css?v=20260227x">
-  <script src="./config.js?v=20260227x"></script>
+  <title>LORD 2.0</title>
+  <link rel="stylesheet" href="/styles.css" />
 </head>
-
 <body>
-  <!-- Animated background -->
-  <div class="fx-bg" aria-hidden="true">
-    <div class="fx-grid" id="fxGrid"></div>
-    <div class="fx-glow"></div>
-    <div class="fx-noise"></div>
-  </div>
+  <div id="bg"></div>
 
-  <div class="app">
-    <!-- Left sidebar -->
-    <aside class="sidebar">
+  <div class="shell">
+    <header class="topbar">
       <div class="brand">
         <div class="logo"></div>
-        <div class="brand-text">
-          <div class="brand-title">LORD</div>
-          <div class="brand-sub">Exchange UI</div>
+        <div>
+          <div class="title">LORD 2.0</div>
+          <div class="sub">USDT Transfers • 1 TX = 1 Block</div>
         </div>
       </div>
-
-      <nav class="nav">
-        <button class="nav-item active" data-route="dashboard">
-          <span class="dot"></span> Dashboard
-        </button>
-        <button class="nav-item" data-route="send">
-          <span class="dot"></span> Send
-        </button>
-        <button class="nav-item" data-route="explorer">
-          <span class="dot"></span> Explorer
-        </button>
-        <button class="nav-item" data-route="admin" id="navAdmin" disabled title="Admin only">
-          <span class="dot"></span> Admin
-        </button>
-        <button class="nav-item" data-route="auth" id="navAuth">
-          <span class="dot"></span> Sign in
-        </button>
-      </nav>
-
-      <div class="side-footer">
-        <div class="pill" id="pillStatus">
-          <span class="pulse"></span>
-          <span id="statusText">Disconnected</span>
-        </div>
-        <button class="btn ghost" id="btnLogout" disabled>Logout</button>
+      <div class="top-actions">
+        <button id="btnLogout" class="btn ghost hidden">Logout</button>
       </div>
-    </aside>
+    </header>
 
-    <!-- Main area -->
-    <main class="main">
-      <header class="topbar">
-        <div class="top-left">
-          <div class="page-title" id="pageTitle">Dashboard</div>
-          <div class="muted" id="pageSubtitle">Live market + wallet</div>
+    <main class="grid">
+      <!-- AUTH -->
+      <section id="authCard" class="card">
+        <div class="card-head">
+          <div class="h1">Welcome</div>
+          <div class="muted">Login or create an account</div>
         </div>
 
-        <div class="top-right">
-          <div class="mini-card">
-            <div class="mini-k">Account</div>
-            <div class="mini-v" id="whoami">Guest</div>
-          </div>
-          <div class="mini-card">
-            <div class="mini-k">Balance</div>
-            <div class="mini-v mono" id="balanceTop">0.00000000</div>
-          </div>
+        <div class="tabs">
+          <button id="tabLogin" class="tab active">Login</button>
+          <button id="tabRegister" class="tab">Register</button>
         </div>
-      </header>
 
-      <!-- Toasts -->
-      <div class="toasts" id="toasts"></div>
+        <form id="loginForm" class="form">
+          <label>Email</label>
+          <input id="loginEmail" type="email" autocomplete="email" required />
+          <label>Password</label>
+          <input id="loginPassword" type="password" autocomplete="current-password" required />
+          <button class="btn primary" type="submit">Login</button>
+        </form>
 
-      <!-- Pages -->
-      <section class="page active" id="page-dashboard">
-        <div class="grid2">
-          <div class="card glass">
-            <div class="card-h">
-              <div>
-                <div class="h-title">Market</div>
-                <div class="muted">LORDUSDT • Real-time WebSocket</div>
-              </div>
-              <div class="price">
-                <div class="muted tiny">Last</div>
-                <div class="price-v mono" id="lastPrice">—</div>
-              </div>
-            </div>
+        <form id="registerForm" class="form hidden">
+          <label>Email</label>
+          <input id="regEmail" type="email" autocomplete="email" required />
+          <label>Password</label>
+          <input id="regPassword" type="password" autocomplete="new-password" required />
+          <button class="btn primary" type="submit">Create Account</button>
+        </form>
 
-            <div class="chart-wrap">
-              <canvas id="chart" width="980" height="360"></canvas>
-              <div class="chart-badges">
-                <span class="badge">Candles: 1m</span>
-                <span class="badge" id="wsBadge">WS: off</span>
-              </div>
-            </div>
-
-            <div class="row">
-              <div class="stat">
-                <div class="muted tiny">Symbol</div>
-                <div class="mono" id="symbol">LORDUSDT</div>
-              </div>
-              <div class="stat">
-                <div class="muted tiny">TF</div>
-                <div class="mono" id="tf">60s</div>
-              </div>
-              <div class="stat">
-                <div class="muted tiny">Candle</div>
-                <div class="mono" id="candleOHLC">—</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="card glass">
-            <div class="card-h">
-              <div>
-                <div class="h-title">Wallet</div>
-                <div class="muted">JWT protected</div>
-              </div>
-              <button class="btn" id="btnRefreshMe">Refresh</button>
-            </div>
-
-            <div class="wallet">
-              <div class="wallet-row">
-                <div class="muted tiny">User</div>
-                <div class="mono" id="walletUser">Guest</div>
-              </div>
-              <div class="wallet-row">
-                <div class="muted tiny">Balance</div>
-                <div class="mono big" id="walletBalance">0.00000000</div>
-              </div>
-              <div class="wallet-row">
-                <div class="muted tiny">Role</div>
-                <div class="mono" id="walletRole">—</div>
-              </div>
-            </div>
-
-            <div class="divider"></div>
-
-            <div class="h-title">Latest TX</div>
-            <div class="txlist" id="latestTxList">
-              <div class="muted">No data</div>
-            </div>
-            <button class="btn ghost full" id="btnLoadLatest">Load latest</button>
-          </div>
-        </div>
+        <div id="authHint" class="hint"></div>
       </section>
 
-      <section class="page" id="page-send">
-        <div class="grid2">
-          <div class="card glass">
-            <div class="card-h">
-              <div>
-                <div class="h-title">Send</div>
-                <div class="muted">Transfer to username</div>
-              </div>
-            </div>
-
-            <div class="form">
-              <label>To username</label>
-              <input id="sendTo" placeholder="e.g. javohir" autocomplete="off" />
-
-              <label>Amount</label>
-              <input id="sendAmount" placeholder="e.g. 12.5" autocomplete="off" />
-
-              <button class="btn" id="btnSend">Send</button>
-              <div class="muted tiny">Need login (JWT). Balance must be enough.</div>
-            </div>
+      <!-- DASHBOARD -->
+      <section id="dashCard" class="card hidden">
+        <div class="card-head row">
+          <div>
+            <div class="h1">Dashboard</div>
+            <div class="muted" id="meLine">—</div>
           </div>
+          <div class="pill" id="statusPill">—</div>
+        </div>
 
-          <div class="card glass">
-            <div class="card-h">
-              <div>
-                <div class="h-title">Preview</div>
-                <div class="muted">Auto checks</div>
-              </div>
-            </div>
-            <div class="preview" id="sendPreview">
-              <div class="muted">Fill the form to preview…</div>
-            </div>
+        <div class="stats">
+          <div class="stat">
+            <div class="muted">Balance</div>
+            <div class="big" id="balance">0.00000000</div>
+            <div class="tiny">USDT</div>
+          </div>
+          <div class="stat">
+            <div class="muted">Address</div>
+            <div class="mono" id="address">—</div>
+            <button id="copyAddress" class="btn ghost small" type="button">Copy</button>
           </div>
         </div>
-      </section>
 
-      <section class="page" id="page-explorer">
-        <div class="grid2">
-          <div class="card glass">
-            <div class="card-h">
-              <div>
-                <div class="h-title">Explorer</div>
-                <div class="muted">Search tx hash or username</div>
-              </div>
-            </div>
-
-            <div class="form">
-              <label>TX hash</label>
-              <input id="exTxHash" placeholder="paste tx hash" autocomplete="off" />
-              <button class="btn" id="btnFindTx">Find TX</button>
-
-              <div class="divider"></div>
-
-              <label>Username</label>
-              <input id="exUsername" placeholder="e.g. admin" autocomplete="off" />
-              <button class="btn ghost" id="btnFindUser">Find User</button>
-            </div>
+        <div class="split">
+          <div class="panel">
+            <div class="h2">Send USDT</div>
+            <form id="sendForm" class="form compact">
+              <label>Receiver address</label>
+              <input id="recvAddress" class="mono" placeholder="LORD_..." required />
+              <label>Amount (USDT)</label>
+              <input id="amount" inputmode="decimal" placeholder="10.5" required />
+              <button class="btn primary" type="submit">Send</button>
+            </form>
+            <div id="sendHint" class="hint"></div>
           </div>
 
-          <div class="card glass">
-            <div class="card-h">
-              <div>
-                <div class="h-title">Result</div>
-                <div class="muted">Explorer output</div>
-              </div>
-            </div>
-            <pre class="code" id="exResult">{}</pre>
+          <div class="panel">
+            <div class="h2">Explorer</div>
+            <form id="explorerForm" class="form compact">
+              <label>TX Hash</label>
+              <input id="txHash" class="mono" placeholder="TX_..." required />
+              <button class="btn ghost" type="submit">Check</button>
+            </form>
+            <pre id="explorerOut" class="pre"></pre>
           </div>
         </div>
-      </section>
 
-      <section class="page" id="page-admin">
-        <div class="grid2">
-          <div class="card glass">
-            <div class="card-h">
-              <div>
-                <div class="h-title">Admin</div>
-                <div class="muted">Users management</div>
-              </div>
-              <button class="btn" id="btnAdminReload">Reload</button>
+        <div class="panel">
+          <div class="h2">History</div>
+          <div class="table">
+            <div class="thead">
+              <div>Dir</div><div>Counterparty</div><div>Amount</div><div>Time</div><div>Status</div><div>TX</div>
             </div>
-
-            <div class="muted tiny">
-              Admin access requires: seeded DB user <span class="mono">admin@lord.local</span> with password <span class="mono">sotiboldi22</span>.
-              (Normal login orqali.)
-            </div>
-
-            <div class="divider"></div>
-
-            <div class="table" id="adminTable">
-              <div class="muted">No data</div>
-            </div>
-          </div>
-
-          <div class="card glass">
-            <div class="card-h">
-              <div>
-                <div class="h-title">Admin Notes</div>
-                <div class="muted">Role-based (server)</div>
-              </div>
-            </div>
-            <ul class="ul">
-              <li>Freeze user → blocks actions (is_active=false).</li>
-              <li>Unfreeze user → restores access.</li>
-              <li>Admin-only endpoints are protected server-side.</li>
-              <li>If you are not admin, this page stays locked.</li>
-            </ul>
+            <div id="historyBody" class="tbody"></div>
           </div>
         </div>
-      </section>
 
-      <section class="page" id="page-auth">
-        <div class="auth-shell">
-          <div class="auth-card glass">
-            <div class="auth-head">
-              <div class="auth-title">Sign In</div>
-              <div class="muted">JWT login</div>
-            </div>
-
-            <div class="tabs">
-              <button class="tab active" data-tab="login">Login</button>
-              <button class="tab" data-tab="register">Register</button>
-            </div>
-
-            <div class="tabpane active" id="tab-login">
-              <label>Email</label>
-              <input id="loginEmail" type="email" placeholder="you@gmail.com" autocomplete="username" />
-              <label>Password</label>
-              <input id="loginPassword" type="password" placeholder="password" autocomplete="current-password" />
-              <button class="btn full" id="btnLogin">Login</button>
-              <div class="muted tiny">Admin: <span class="mono">admin@lord.local</span> / <span class="mono">sotiboldi22</span></div>
-            </div>
-
-            <div class="tabpane" id="tab-register">
-              <label>Username</label>
-              <input id="regUsername" placeholder="username" autocomplete="off" />
-              <label>Email</label>
-              <input id="regEmail" type="email" placeholder="email" autocomplete="username" />
-              <label>Password</label>
-              <input id="regPassword" type="password" placeholder="min 6 chars" autocomplete="new-password" />
-              <button class="btn full" id="btnRegister">Create account</button>
-              <div class="muted tiny">You get initial balance automatically.</div>
-            </div>
-
-            <div class="divider"></div>
-            <div class="muted tiny">UI route: /ui/ • API: /api/v1 • WS: /ws/market</div>
+        <div id="adminBlock" class="panel hidden">
+          <div class="h2">Admin</div>
+          <div class="admin-tabs">
+            <button data-a="users" class="btn ghost small">Users</button>
+            <button data-a="txs" class="btn ghost small">Transactions</button>
+            <button data-a="logs" class="btn ghost small">Logs</button>
           </div>
+          <pre id="adminOut" class="pre"></pre>
         </div>
       </section>
     </main>
+
+    <div id="toast" class="toast hidden"></div>
   </div>
 
-  <script src="./app.js?v=20260227x"></script>
+  <script src="/app.js"></script>
 </body>
 </html>

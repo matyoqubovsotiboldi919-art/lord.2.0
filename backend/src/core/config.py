@@ -1,25 +1,30 @@
 from pydantic_settings import BaseSettings
+from pydantic import Field
 
 
 class Settings(BaseSettings):
-    DATABASE_URL: str
-    SECRET_KEY: str
-    ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    DATABASE_URL: str = Field(..., description="postgresql+psycopg://...")
 
-    ADMIN_USERNAME: str = "admin"
-    ADMIN_PASSWORD: str = "sotiboldi22"
+    JWT_SECRET: str = Field(..., description="JWT signing secret")
+    JWT_ALG: str = Field(default="HS256")
+    JWT_EXPIRES_MIN: int = Field(default=60)
 
-    INITIAL_USER_BALANCE: float = 1000.0
+    ADDRESS_SECRET: str = Field(..., description="HMAC secret for address generation")
 
-    # comma separated or *
-    ALLOWED_ORIGINS: str = "*"
+    ADMIN_SEED_ENABLED: bool = Field(default=False)
+    ADMIN_EMAIL: str | None = None
+    ADMIN_PASSWORD: str | None = None
 
-    # Frontend folder (relative to backend/src)
-    FRONTEND_DIR: str = "../../frontend"
+    # Optional: SMTP if you have OTP already; keep if exists in your project
+    SMTP_HOST: str | None = None
+    SMTP_PORT: int | None = None
+    SMTP_USER: str | None = None
+    SMTP_PASS: str | None = None
+    EMAIL_FROM: str | None = None
 
     class Config:
         env_file = ".env"
+        extra = "ignore"
 
 
 settings = Settings()

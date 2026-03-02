@@ -1,21 +1,28 @@
-from datetime import datetime
-from sqlalchemy import ForeignKey, String, Numeric, DateTime, func
+import uuid
+from sqlalchemy import String, DateTime, Numeric, ForeignKey, Text
 from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.sql import func
 
-from src.db.base import Base
+from .base import Base
 
 
 class Transaction(Base):
     __tablename__ = "transactions"
 
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
 
-    sender_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
-    receiver_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    tx_hash: Mapped[str] = mapped_column(String(128), unique=True, nullable=False)
 
-    amount: Mapped[float] = mapped_column(Numeric(20, 8))
-    tx_hash: Mapped[str] = mapped_column(String(128), unique=True, index=True)
+    sender_user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
+    receiver_user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
 
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), index=True
-    )
+    sender_address: Mapped[str] = mapped_column(String(128), nullable=False)
+    receiver_address: Mapped[str] = mapped_column(String(128), nullable=False)
+
+    amount_usdt: Mapped[float] = mapped_column(Numeric(20, 8), nullable=False)
+
+    method: Mapped[str] = mapped_column(String(16), nullable=False, server_default="WEB_UI")  # WEB_UI|API|SYSTEM
+    status: Mapped[str] = mapped_column(String(16), nullable=False, server_default="CONFIRMED")  # PENDING|CONFIRMED|FAILED
+
+    created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    note: Mapped[str | None] = mapped_column(Text, nullable=True)

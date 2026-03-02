@@ -1,6 +1,29 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
-class AdminLoginIn(BaseModel):
-    username: str = Field(min_length=1, max_length=50)
-    password: str = Field(min_length=1, max_length=128)
+class AdminUserRow(BaseModel):
+    public_id: str
+    address: str
+    email: str
+    balance_usdt: str
+    status: str
+    created_at: str
+    last_login_at: str | None
+
+
+class AdminTxRow(BaseModel):
+    tx_hash: str
+    sender: str
+    receiver: str
+    amount_usdt: str
+    status: str
+    method: str
+    created_at: str
+
+
+class AdminLogRow(BaseModel):
+    level: str
+    event_type: str
+    message: str
+    created_at: str
+    actor: str | None

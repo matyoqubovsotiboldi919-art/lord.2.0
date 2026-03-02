@@ -1,40 +1,74 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
-from src.db.session import get_db
-from src.models.transaction import Transaction
-from src.models.user import User
+from ..core.db import get_db
+from ..models.transaction import Transaction
+from ..models.block import Block
+from ..models.user import User
+from ..schemas.explorer import ExplorerTxOut
+from ..services.tx import mask_address
+from ..services.security import decode_token, require_active_session
 
 router = APIRouter(prefix="/api/v1/explorer", tags=["explorer"])
 
+# OPTIONAL auth (token bo‘lmasa ham ishlaydi)
+auth_optional = HTTPBearer(auto_error=False)
 
-@router.get("/tx/{tx_hash}")
-def tx_by_hash(tx_hash: str, db: Session = Depends(get_db)):
+
+def get_optional_user(
+    creds: HTTPAuthorizationCredentials | None,
+    db: Session
+) -> User | None:
+    if not creds:
+        return None
+    try:
+        payload = decode_token(creds.credentials)
+        user_id = payload.get("sub")
+        sid = payload.get("sid")
+        if not user_id or not sid:
+            return None
+
+        u = db.query(User).filter(User.id == user_id).first()
+        if not u:
+            return None
+
+        if not require_active_session(db, u.id, sid):
+            return None
+
+        return u
+    except Exception:
+        return None
+
+
+@router.get("/tx/{tx_hash}", response_model=ExplorerTxOut)
+def explorer_tx(
+    tx_hash: str,
+    db: Session = Depends(get_db),
+    creds: HTTPAuthorizationCredentials | None = Depends(auth_optional),
+):
     tx = db.query(Transaction).filter(Transaction.tx_hash == tx_hash).first()
-    return {"found": bool(tx), "tx": tx.__dict__ if tx else None}
+    if not tx:
+        raise HTTPException(status_code=404, detail="Transaction not found")
 
+    blk = db.query(Block).filter(Block.tx_hash == tx_hash).first()
+    if not blk:
+        raise HTTPException(status_code=404, detail="Block not found")
 
-@router.get("/address/{username}")
-def user_by_username(username: str, db: Session = Depends(get_db)):
-    u = db.query(User).filter(User.username == username).first()
-    if not u:
-        return {"found": False}
-    return {
-        "found": True,
-        "user": {"id": u.id, "username": u.username, "balance": float(u.balance), "is_active": u.is_active},
-    }
+    me = get_optional_user(creds, db)
+    is_admin = bool(me and me.role == "ADMIN")
 
+    sender = tx.sender_address if is_admin else mask_address(tx.sender_address)
+    receiver = tx.receiver_address if is_admin else mask_address(tx.receiver_address)
 
-@router.get("/latest")
-def latest(db: Session = Depends(get_db), limit: int = 50):
-    q = db.query(Transaction).order_by(Transaction.created_at.desc()).limit(min(limit, 200))
-    items = []
-    for tx in q:
-        items.append({
-            "tx_hash": tx.tx_hash,
-            "sender_id": tx.sender_id,
-            "receiver_id": tx.receiver_id,
-            "amount": float(tx.amount),
-            "created_at": tx.created_at.isoformat() if tx.created_at else None,
-        })
-    return {"items": items}
+    return ExplorerTxOut(
+        tx_hash=tx.tx_hash,
+        amount_usdt=str(tx.amount_usdt),
+        created_at=tx.created_at.isoformat(),
+        status=tx.status,
+        block_index=int(blk.block_index),
+        block_hash=blk.block_hash,
+        prev_hash=blk.prev_hash,
+        sender=sender,
+        receiver=receiver,
+    )

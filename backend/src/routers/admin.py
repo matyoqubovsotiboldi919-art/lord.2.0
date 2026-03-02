@@ -1,52 +1,90 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from src.core.config import settings
-from src.db.session import get_db
-from src.models.user import User
-from src.schemas.admin import AdminLoginIn
-from src.services.security import create_access_token, require_admin, hash_password, verify_password
+from ..core.db import get_db
+from ..models.user import User
+from ..models.transaction import Transaction
+from ..models.system_log import SystemLog
+from ..schemas.admin import AdminUserRow, AdminTxRow, AdminLogRow
+from ..services.tx import mask_address
+from .users import get_current_user
 
 router = APIRouter(prefix="/api/v1/admin", tags=["admin"])
 
 
-@router.post("/login")
-def admin_login(payload: AdminLoginIn):
-    if payload.username != settings.ADMIN_USERNAME or payload.password != settings.ADMIN_PASSWORD:
-        raise HTTPException(status_code=401, detail="Invalid admin credentials")
-
-    # admin token subject is literal "admin" but we won't use get_current_user for it;
-    # we will protect admin routes using real admin user in DB (seeded).
-    token = create_access_token(subject="admin")
-    return {"access_token": token, "token_type": "bearer"}
+def require_admin(me: User = Depends(get_current_user)) -> User:
+    if me.role != "ADMIN":
+        raise HTTPException(status_code=403, detail="Admin only")
+    return me
 
 
-@router.get("/users")
-def list_users(db: Session = Depends(get_db), admin: User = Depends(require_admin)):
-    users = db.query(User).order_by(User.id.asc()).limit(500).all()
-    return [{
-        "id": u.id, "username": u.username, "email": u.email,
-        "is_admin": u.is_admin, "is_active": u.is_active, "balance": float(u.balance)
-    } for u in users]
+@router.get("/users", response_model=list[AdminUserRow])
+def admin_users(db: Session = Depends(get_db), me: User = Depends(require_admin)):
+    users = db.query(User).order_by(User.created_at.desc()).limit(500).all()
+    return [
+        AdminUserRow(
+            public_id=u.public_id,
+            address=u.address,
+            email=u.email,
+            balance_usdt=str(u.balance_usdt),
+            status=u.status,
+            created_at=u.created_at.isoformat(),
+            last_login_at=u.last_login_at.isoformat() if u.last_login_at else None
+        )
+        for u in users
+    ]
 
 
-@router.post("/users/{user_id}/freeze")
-def freeze_user(user_id: int, db: Session = Depends(get_db), admin: User = Depends(require_admin)):
-    u = db.get(User, user_id)
+@router.post("/users/{public_id}/freeze")
+def freeze_user(public_id: str, db: Session = Depends(get_db), me: User = Depends(require_admin)):
+    u = db.query(User).filter(User.public_id == public_id).first()
     if not u:
         raise HTTPException(status_code=404, detail="User not found")
-    if u.is_admin:
-        raise HTTPException(status_code=400, detail="Cannot freeze admin")
-    u.is_active = False
+    u.status = "FROZEN"
     db.commit()
     return {"ok": True}
 
 
-@router.post("/users/{user_id}/unfreeze")
-def unfreeze_user(user_id: int, db: Session = Depends(get_db), admin: User = Depends(require_admin)):
-    u = db.get(User, user_id)
+@router.post("/users/{public_id}/unfreeze")
+def unfreeze_user(public_id: str, db: Session = Depends(get_db), me: User = Depends(require_admin)):
+    u = db.query(User).filter(User.public_id == public_id).first()
     if not u:
         raise HTTPException(status_code=404, detail="User not found")
-    u.is_active = True
+    u.status = "ACTIVE"
     db.commit()
     return {"ok": True}
+
+
+@router.get("/transactions", response_model=list[AdminTxRow])
+def admin_txs(db: Session = Depends(get_db), me: User = Depends(require_admin)):
+    txs = db.query(Transaction).order_by(Transaction.created_at.desc()).limit(500).all()
+    return [
+        AdminTxRow(
+            tx_hash=t.tx_hash,
+            sender=mask_address(t.sender_address),
+            receiver=mask_address(t.receiver_address),
+            amount_usdt=str(t.amount_usdt),
+            status=t.status,
+            method=t.method,
+            created_at=t.created_at.isoformat()
+        )
+        for t in txs
+    ]
+
+
+@router.get("/logs", response_model=list[AdminLogRow])
+def admin_logs(db: Session = Depends(get_db), me: User = Depends(require_admin)):
+    logs = db.query(SystemLog).order_by(SystemLog.created_at.desc()).limit(500).all()
+    # actor as public_id if possible
+    user_map = {str(u.id): u.public_id for u in db.query(User).all()}
+    out = []
+    for l in logs:
+        actor = user_map.get(str(l.actor_user_id)) if l.actor_user_id else None
+        out.append(AdminLogRow(
+            level=l.level,
+            event_type=l.event_type,
+            message=l.message,
+            created_at=l.created_at.isoformat(),
+            actor=actor
+        ))
+    return out
