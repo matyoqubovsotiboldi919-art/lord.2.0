@@ -5,176 +5,155 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>LORD BLOCKCHAIN</title>
 
-  <link rel="stylesheet" href="/styles.css?v=20260302d" />
-  <script src="/config.js"></script>
+  <!-- cache bust -->
+  <link rel="stylesheet" href="/styles.css?v=20260303a" />
 </head>
 <body>
-  <!-- Toast -->
-  <div id="toast" class="toast hidden"></div>
-
   <div class="bg"></div>
 
+  <!-- Toast -->
+  <div id="toast" class="toast hidden">OK</div>
+
+  <!-- Top bar -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="dot"></div>
+      <div class="brandText">
+        <div class="brandTitle">LORD BLOCKCHAIN</div>
+        <div class="brandSub">USDT Transfers • 1 TX = 1 Block</div>
+      </div>
+    </div>
+
+    <button id="btnLogout" class="btn ghost hidden">Logout</button>
+  </header>
+
   <main class="wrap">
-    <!-- Top bar -->
-    <header class="topbar">
-      <div class="brand">
-        <div class="logo"></div>
-        <div class="brandText">
-          <div class="brandTitle">LORD BLOCKCHAIN</div>
-          <div class="brandSub">USDT Transfers • 1 TX = 1 Block</div>
-        </div>
+    <!-- AUTH -->
+    <section id="authCard" class="card auth">
+      <div class="tabs">
+        <button id="tabLogin" class="tab active" type="button">Login</button>
+        <button id="tabRegister" class="tab" type="button">Register</button>
       </div>
 
-      <button id="btnLogout" class="btn btnGhost hidden" type="button">Logout</button>
-    </header>
+      <form id="loginForm" class="form">
+        <label>Email</label>
+        <input id="loginEmail" type="email" autocomplete="email" placeholder="you@gmail.com" required />
+        <label>Password</label>
+        <input id="loginPassword" type="password" autocomplete="current-password" placeholder="••••••••" required />
+        <button class="btn primary" type="submit">Login</button>
+      </form>
 
-    <!-- AUTH -->
-    <section id="authRoot" class="section">
-      <div id="authCard" class="card authCard">
-        <div class="tabs">
-          <button id="tabLogin" class="tab active" type="button">Login</button>
-          <button id="tabRegister" class="tab" type="button">Register</button>
-        </div>
+      <form id="registerForm" class="form hidden">
+        <label>Email</label>
+        <input id="regEmail" type="email" autocomplete="email" placeholder="you@gmail.com" required />
+        <label>Password</label>
+        <input id="regPassword" type="password" autocomplete="new-password" placeholder="Min 6 chars" required />
+        <button class="btn primary" type="submit">Create account</button>
+      </form>
 
-        <form id="loginForm" class="form">
-          <label class="lbl">Email</label>
-          <input id="loginEmail" class="inp" type="email" autocomplete="email" placeholder="you@gmail.com" required />
+      <div id="authHint" class="hint"></div>
 
-          <label class="lbl">Password</label>
-          <input id="loginPassword" class="inp" type="password" autocomplete="current-password" placeholder="••••••••" required />
-
-          <button class="btn btnPrimary" type="submit">Login</button>
-        </form>
-
-        <form id="registerForm" class="form hidden">
-          <label class="lbl">Email</label>
-          <input id="regEmail" class="inp" type="email" autocomplete="email" placeholder="you@gmail.com" required />
-
-          <label class="lbl">Password</label>
-          <input id="regPassword" class="inp" type="password" autocomplete="new-password" placeholder="min 6 chars" required />
-
-          <button class="btn btnPrimary" type="submit">Create account</button>
-        </form>
-
-        <div id="authHint" class="hint">
-          Security: single session • no manual balance edits • address-only transfers
-        </div>
+      <div class="fine">
+        <span class="dotSm"></span>
+        Security: single session • no manual balance edits • address-only transfers
       </div>
     </section>
 
-    <!-- APP -->
-    <section id="appRoot" class="section hidden">
+    <!-- DASH -->
+    <section id="dashCard" class="dash hidden">
       <div class="grid">
         <!-- Dashboard -->
-        <div id="dashCard" class="card">
+        <div class="card">
           <div class="cardHead">
             <div>
-              <div class="h1">Dashboard</div>
-              <div id="meLine" class="sub">—</div>
+              <div class="h2">Dashboard</div>
+              <div id="meLine" class="sub">ID: — • —</div>
             </div>
             <div id="statusPill" class="pill">ACTIVE</div>
           </div>
 
           <div class="dashRow">
-            <div class="stat">
-              <div class="k">Balance</div>
-              <div id="balance" class="v">0.00000000</div>
-              <div class="u">USDT</div>
+            <div class="miniCard">
+              <div class="miniLabel">Balance</div>
+              <div id="balance" class="balance">0</div>
+              <div class="miniUnit">USDT</div>
             </div>
 
-            <div class="addr">
-              <div class="k">Address</div>
-              <div class="addrRow">
-                <div id="address" class="mono">—</div>
-                <button id="copyAddress" class="btn btnSmall btnGhost" type="button">Copy</button>
+            <div class="miniCard wide">
+              <div class="miniLabel">Address</div>
+              <div class="addrLine">
+                <div id="address" class="mono addr">LORD_...</div>
+                <button id="copyAddress" class="btn tiny ghost" type="button">Copy</button>
               </div>
-              <div class="mini">Transfers only by address</div>
             </div>
           </div>
         </div>
 
         <!-- Send -->
         <div class="card">
-          <div class="cardHead">
-            <div>
-              <div class="h1">Send USDT</div>
-              <div class="sub">Transfer by address only</div>
-            </div>
-          </div>
+          <div class="h2">Send USDT</div>
+          <div class="sub">Transfer by address only</div>
 
-          <form id="sendForm" class="form">
-            <label class="lbl">Receiver address</label>
-            <input id="recvAddress" class="inp mono" type="text" placeholder="LORD_..." required />
+          <form id="sendForm" class="form compact">
+            <label>Receiver address</label>
+            <input id="recvAddress" type="text" class="mono" placeholder="LORD_..." required />
 
-            <label class="lbl">Amount (USDT)</label>
-            <input id="amount" class="inp" type="number" step="0.00000001" min="0" placeholder="10.5" required />
+            <label>Amount (USDT)</label>
+            <input id="amount" type="number" step="0.00000001" placeholder="10.5" required />
 
-            <button class="btn btnPrimary" type="submit">Send</button>
-            <div id="sendHint" class="hint2 hidden"></div>
+            <button class="btn primary" type="submit">Send</button>
+            <div id="sendHint" class="hint"></div>
           </form>
         </div>
 
         <!-- Explorer -->
         <div class="card">
-          <div class="cardHead">
-            <div>
-              <div class="h1">Explorer</div>
-              <div class="sub">Check any tx_hash</div>
-            </div>
-          </div>
+          <div class="h2">Explorer</div>
+          <div class="sub">Check any tx_hash</div>
 
-          <form id="explorerForm" class="form">
-            <label class="lbl">TX Hash</label>
-            <input id="txHash" class="inp mono" type="text" placeholder="TX_..." required />
-            <button class="btn btnPrimary" type="submit">Check</button>
+          <form id="explorerForm" class="form compact">
+            <label>TX Hash</label>
+            <input id="txHash" type="text" class="mono" placeholder="TX_..." required />
+            <button class="btn primary" type="submit">Check</button>
           </form>
 
-          <pre id="explorerOut" class="out">—</pre>
+          <pre id="explorerOut" class="out">-</pre>
         </div>
 
         <!-- History -->
-        <div class="card wide">
-          <div class="cardHead">
-            <div>
-              <div class="h1">History</div>
-              <div class="sub">Visible only to involved users</div>
-            </div>
+        <div class="card span2">
+          <div class="h2">History</div>
+          <div class="sub">Visible only to involved users</div>
+
+          <div class="tableHead">
+            <div>Dir</div>
+            <div>Counterparty</div>
+            <div>Amount</div>
+            <div>Time</div>
+            <div>Status</div>
+            <div>TX</div>
           </div>
 
-          <div class="tableWrap">
-            <table class="tbl">
-              <thead>
-                <tr>
-                  <th>Dir</th>
-                  <th>Counterparty</th>
-                  <th>Amount</th>
-                  <th>Time</th>
-                  <th>Status</th>
-                  <th>TX</th>
-                </tr>
-              </thead>
-              <tbody id="historyBody">
-                <tr><td colspan="6" class="muted">—</td></tr>
-              </tbody>
-            </table>
+          <div id="historyBody" class="tableBody">
+            <!-- rows injected by app.js -->
           </div>
         </div>
 
-        <!-- Admin (if needed by app.js) -->
-        <div id="adminBlock" class="card wide hidden">
-          <div class="cardHead">
-            <div>
-              <div class="h1">Admin</div>
-              <div class="sub">Users / Transactions / Logs</div>
-            </div>
+        <!-- Admin -->
+        <div id="adminBlock" class="card span2 hidden">
+          <div class="h2">Admin</div>
+          <div class="admin-tabs">
+            <button class="btn ghost tiny" type="button" data-a="users">Users</button>
+            <button class="btn ghost tiny" type="button" data-a="txs">Transactions</button>
+            <button class="btn ghost tiny" type="button" data-a="logs">Logs</button>
           </div>
-          <pre id="adminOut" class="out">—</pre>
+          <pre id="adminOut" class="out">-</pre>
         </div>
-
       </div>
     </section>
   </main>
 
-  <script src="/app.js?v=20260302d"></script>
+  <script src="/config.js?v=20260303a"></script>
+  <script src="/app.js?v=20260303a"></script>
 </body>
 </html>
