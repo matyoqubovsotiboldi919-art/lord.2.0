@@ -1,4 +1,4 @@
-"""users.id -> UUID safety fix (convert int id to uuid if needed)
+"""Fix legacy int PK: users.id -> UUID + migrate transactions FK columns
 
 Revision ID: 20260302_lord2_safe4
 Revises: 20260302_lord2_safe3
@@ -6,7 +6,6 @@ Create Date: 2026-03-02
 """
 from alembic import op
 
-# revision identifiers, used by Alembic.
 revision = "20260302_lord2_safe4"
 down_revision = "20260302_lord2_safe3"
 branch_labels = None
@@ -19,18 +18,19 @@ def upgrade():
     DECLARE
       id_type text;
       has_users boolean;
+      has_tx boolean;
+      con record;
     BEGIN
       -- pgcrypto for gen_random_uuid()
       BEGIN
         CREATE EXTENSION IF NOT EXISTS pgcrypto;
       EXCEPTION WHEN insufficient_privilege THEN
-        -- ignore if cannot create extension (Render usually allows)
         NULL;
       END;
 
       SELECT EXISTS (
         SELECT 1 FROM information_schema.tables
-        WHERE table_schema = 'public' AND table_name = 'users'
+        WHERE table_schema='public' AND table_name='users'
       ) INTO has_users;
 
       IF NOT has_users THEN
@@ -50,79 +50,154 @@ def upgrade():
         RETURN;
       END IF;
 
-      -- users exists: check current id datatype
       SELECT data_type
       INTO id_type
       FROM information_schema.columns
       WHERE table_schema='public' AND table_name='users' AND column_name='id';
 
-      -- If already UUID, do nothing
+      -- already UUID -> nothing to do
       IF id_type = 'uuid' THEN
         RETURN;
       END IF;
 
-      -- If integer/bigint: convert safely by creating new uuid column then swapping
-      IF id_type IN ('integer', 'bigint', 'smallint') THEN
+      -- only handle legacy integer IDs
+      IF id_type NOT IN ('integer','bigint','smallint') THEN
+        RAISE NOTICE 'users.id type is %, skip', id_type;
+        RETURN;
+      END IF;
 
-        -- add new uuid column if missing
-        IF NOT EXISTS (
-          SELECT 1 FROM information_schema.columns
-          WHERE table_schema='public' AND table_name='users' AND column_name='id_uuid'
-        ) THEN
-          ALTER TABLE users ADD COLUMN id_uuid UUID;
+      -- check transactions table
+      SELECT EXISTS (
+        SELECT 1 FROM information_schema.tables
+        WHERE table_schema='public' AND table_name='transactions'
+      ) INTO has_tx;
+
+      -- 1) drop FK constraints in transactions that reference users (if tx exists)
+      IF has_tx THEN
+        FOR con IN
+          SELECT c.conname
+          FROM pg_constraint c
+          WHERE c.contype='f'
+            AND c.conrelid='transactions'::regclass
+            AND c.confrelid='users'::regclass
+        LOOP
+          EXECUTE format('ALTER TABLE transactions DROP CONSTRAINT %I', con.conname);
+        END LOOP;
+      END IF;
+
+      -- 2) prepare uuid column on users
+      IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema='public' AND table_name='users' AND column_name='id_uuid'
+      ) THEN
+        ALTER TABLE users ADD COLUMN id_uuid UUID;
+      END IF;
+
+      UPDATE users
+      SET id_uuid = COALESCE(id_uuid, gen_random_uuid())
+      WHERE id_uuid IS NULL;
+
+      -- drop PK now (no FK dependency)
+      FOR con IN
+        SELECT conname
+        FROM pg_constraint
+        WHERE conrelid='users'::regclass AND contype='p'
+      LOOP
+        EXECUTE format('ALTER TABLE users DROP CONSTRAINT %I', con.conname);
+      END LOOP;
+
+      -- rename old int id -> legacy_id (keep for mapping)
+      IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema='public' AND table_name='users' AND column_name='legacy_id'
+      ) THEN
+        ALTER TABLE users RENAME COLUMN id TO legacy_id;
+      END IF;
+
+      -- swap uuid into id
+      ALTER TABLE users RENAME COLUMN id_uuid TO id;
+      ALTER TABLE users ALTER COLUMN id SET NOT NULL;
+
+      -- recreate PK
+      ALTER TABLE users ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
+      -- 3) migrate transactions columns (if tx exists)
+      IF has_tx THEN
+
+        -- CASE A: legacy schema has sender_id/receiver_id (int)
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='transactions' AND column_name='sender_id')
+           AND EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='transactions' AND column_name='receiver_id')
+        THEN
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='transactions' AND column_name='sender_user_id') THEN
+            ALTER TABLE transactions ADD COLUMN sender_user_id UUID;
+          END IF;
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='transactions' AND column_name='receiver_user_id') THEN
+            ALTER TABLE transactions ADD COLUMN receiver_user_id UUID;
+          END IF;
+
+          UPDATE transactions t
+          SET sender_user_id = u.id
+          FROM users u
+          WHERE t.sender_user_id IS NULL AND u.legacy_id = t.sender_id;
+
+          UPDATE transactions t
+          SET receiver_user_id = u.id
+          FROM users u
+          WHERE t.receiver_user_id IS NULL AND u.legacy_id = t.receiver_id;
+
         END IF;
 
-        -- fill nulls
-        UPDATE users
-        SET id_uuid = COALESCE(id_uuid, gen_random_uuid())
-        WHERE id_uuid IS NULL;
+        -- CASE B: columns already named sender_user_id/receiver_user_id but are integer
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='transactions' AND column_name='sender_user_id'
+                   AND data_type IN ('integer','bigint','smallint'))
+        THEN
+          ALTER TABLE transactions ADD COLUMN IF NOT EXISTS sender_user_id_uuid UUID;
+          UPDATE transactions t
+          SET sender_user_id_uuid = u.id
+          FROM users u
+          WHERE t.sender_user_id_uuid IS NULL AND u.legacy_id = t.sender_user_id::int;
 
-        -- drop old PK if exists (name unknown) and create PK on uuid later
-        -- first drop constraints that are primary keys on users
-        PERFORM 1;
-
-        -- rename old id to legacy_id (if not already)
-        IF EXISTS (
-          SELECT 1 FROM information_schema.columns
-          WHERE table_schema='public' AND table_name='users' AND column_name='legacy_id'
-        ) THEN
-          -- already renamed before, do nothing
-          NULL;
-        ELSE
-          ALTER TABLE users RENAME COLUMN id TO legacy_id;
+          ALTER TABLE transactions RENAME COLUMN sender_user_id TO sender_user_legacy_id;
+          ALTER TABLE transactions RENAME COLUMN sender_user_id_uuid TO sender_user_id;
         END IF;
 
-        -- rename id_uuid to id
-        ALTER TABLE users RENAME COLUMN id_uuid TO id;
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='transactions' AND column_name='receiver_user_id'
+                   AND data_type IN ('integer','bigint','smallint'))
+        THEN
+          ALTER TABLE transactions ADD COLUMN IF NOT EXISTS receiver_user_id_uuid UUID;
+          UPDATE transactions t
+          SET receiver_user_id_uuid = u.id
+          FROM users u
+          WHERE t.receiver_user_id_uuid IS NULL AND u.legacy_id = t.receiver_user_id::int;
 
-        -- set not null
-        ALTER TABLE users ALTER COLUMN id SET NOT NULL;
+          ALTER TABLE transactions RENAME COLUMN receiver_user_id TO receiver_user_legacy_id;
+          ALTER TABLE transactions RENAME COLUMN receiver_user_id_uuid TO receiver_user_id;
+        END IF;
 
-        -- drop existing PK constraint (whatever name)
-        EXECUTE (
-          SELECT format('ALTER TABLE users DROP CONSTRAINT %I', conname)
-          FROM pg_constraint
-          WHERE conrelid = 'users'::regclass AND contype='p'
-          LIMIT 1
-        );
-
-        -- create new PK
-        ALTER TABLE users ADD CONSTRAINT users_pkey PRIMARY KEY (id);
-
-        -- ensure email unique (if not exists)
-        IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname='uq_users_email') THEN
+        -- 4) recreate FKs if columns exist
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='transactions' AND column_name='sender_user_id') THEN
           BEGIN
-            CREATE UNIQUE INDEX uq_users_email ON users(email);
-          EXCEPTION WHEN duplicate_table THEN
-            NULL;
+            ALTER TABLE transactions
+              ADD CONSTRAINT transactions_sender_user_id_fkey
+              FOREIGN KEY (sender_user_id) REFERENCES users(id);
+          EXCEPTION WHEN duplicate_object THEN NULL;
+          END;
+        END IF;
+
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='transactions' AND column_name='receiver_user_id') THEN
+          BEGIN
+            ALTER TABLE transactions
+              ADD CONSTRAINT transactions_receiver_user_id_fkey
+              FOREIGN KEY (receiver_user_id) REFERENCES users(id);
+          EXCEPTION WHEN duplicate_object THEN NULL;
           END;
         END IF;
 
       END IF;
+
     END $$;
     """)
 
 
 def downgrade():
-    # Intentionally no downgrade (dangerous to revert ids)
     pass
