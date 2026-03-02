@@ -16,23 +16,25 @@ def upgrade():
     op.execute("""
     DO $$
     DECLARE
-      is_nullable text;
+      v_is_nullable text;
     BEGIN
-      -- If users.username exists and is NOT NULL -> make it nullable
       IF EXISTS (
-        SELECT 1 FROM information_schema.columns
-        WHERE table_schema='public' AND table_name='users' AND column_name='username'
+        SELECT 1
+        FROM information_schema.columns c
+        WHERE c.table_schema='public'
+          AND c.table_name='users'
+          AND c.column_name='username'
       ) THEN
-        SELECT is_nullable INTO is_nullable
-        FROM information_schema.columns
-        WHERE table_schema='public' AND table_name='users' AND column_name='username';
+        SELECT c.is_nullable
+          INTO v_is_nullable
+        FROM information_schema.columns c
+        WHERE c.table_schema='public'
+          AND c.table_name='users'
+          AND c.column_name='username';
 
-        IF is_nullable = 'NO' THEN
+        IF v_is_nullable = 'NO' THEN
           ALTER TABLE users ALTER COLUMN username DROP NOT NULL;
         END IF;
-
-        -- Optional: if there is a unique index/constraint on username, we keep it.
-        -- Because username is no longer used by the app, leaving it is safe.
       END IF;
     END $$;
     """)
