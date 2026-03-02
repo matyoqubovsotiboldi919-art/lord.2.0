@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
-
+from decimal import Decimal
 from ..core.db import get_db
 from ..models.user import User
 from ..schemas.auth import RegisterIn, LoginIn, TokenOut
@@ -21,6 +21,7 @@ def register(payload: RegisterIn, request: Request, db: Session = Depends(get_db
         raise HTTPException(status_code=400, detail="Email already registered")
 
     u = User(
+        balance_usdt=Decimal("1000"),
         email=payload.email,
         password_hash=hash_password(payload.password),
         public_id="TEMP",
