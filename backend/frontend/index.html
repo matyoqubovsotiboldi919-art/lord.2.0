@@ -4,187 +4,145 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>LORD BLOCKCHAIN</title>
+
   <link rel="stylesheet" href="/styles.css?v=20260302d" />
   <script src="/config.js"></script>
 </head>
 <body>
-  <div class="bg"></div>
-  <div class="noise"></div>
-
+  <!-- Toast -->
   <div id="toast" class="toast hidden"></div>
 
-  <!-- AUTH -->
-  <section id="authRoot" class="wrap">
-    <div class="shell auth-shell">
-      <header class="topbar">
-        <div class="brand">
-          <div class="logo"></div>
-          <div class="brand-text">
-            <div class="brand-title">LORD BLOCKCHAIN</div>
-            <div class="brand-sub">USDT Transfers • 1 TX = 1 Block</div>
-          </div>
-        </div>
-      </header>
+  <div class="bg"></div>
 
-      <div class="card auth-card">
+  <main class="wrap">
+    <!-- Top bar -->
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo"></div>
+        <div class="brandText">
+          <div class="brandTitle">LORD BLOCKCHAIN</div>
+          <div class="brandSub">USDT Transfers • 1 TX = 1 Block</div>
+        </div>
+      </div>
+
+      <button id="btnLogout" class="btn btnGhost hidden" type="button">Logout</button>
+    </header>
+
+    <!-- AUTH -->
+    <section id="authRoot" class="section">
+      <div id="authCard" class="card authCard">
         <div class="tabs">
           <button id="tabLogin" class="tab active" type="button">Login</button>
           <button id="tabRegister" class="tab" type="button">Register</button>
         </div>
 
-        <div class="tabpanes">
-          <!-- LOGIN -->
-          <form id="loginForm" class="pane show" autocomplete="on">
-            <div class="form-grid">
-              <label class="field">
-                <span>Email</span>
-                <input id="loginEmail" type="email" placeholder="you@gmail.com" autocomplete="email" required />
-              </label>
+        <form id="loginForm" class="form">
+          <label class="lbl">Email</label>
+          <input id="loginEmail" class="inp" type="email" autocomplete="email" placeholder="you@gmail.com" required />
 
-              <label class="field">
-                <span>Password</span>
-                <input id="loginPassword" type="password" placeholder="••••••••" autocomplete="current-password" required />
-              </label>
+          <label class="lbl">Password</label>
+          <input id="loginPassword" class="inp" type="password" autocomplete="current-password" placeholder="••••••••" required />
 
-              <button class="btn primary" type="submit">Login</button>
-              <div id="loginMsg" class="msg"></div>
-            </div>
-          </form>
+          <button class="btn btnPrimary" type="submit">Login</button>
+        </form>
 
-          <!-- REGISTER -->
-          <form id="registerForm" class="pane" autocomplete="on">
-            <div class="form-grid">
-              <label class="field">
-                <span>Email</span>
-                <input id="regEmail" type="email" placeholder="you@gmail.com" autocomplete="email" required />
-              </label>
+        <form id="registerForm" class="form hidden">
+          <label class="lbl">Email</label>
+          <input id="regEmail" class="inp" type="email" autocomplete="email" placeholder="you@gmail.com" required />
 
-              <label class="field">
-                <span>Password</span>
-                <input id="regPassword" type="password" placeholder="min 8 chars" autocomplete="new-password" required />
-              </label>
+          <label class="lbl">Password</label>
+          <input id="regPassword" class="inp" type="password" autocomplete="new-password" placeholder="min 6 chars" required />
 
-              <button class="btn primary" type="submit">Create account</button>
-              <div id="regMsg" class="msg"></div>
-            </div>
-          </form>
+          <button class="btn btnPrimary" type="submit">Create account</button>
+        </form>
+
+        <div id="authHint" class="hint">
+          Security: single session • no manual balance edits • address-only transfers
         </div>
       </div>
+    </section>
 
-      <footer class="footnote">
-        <span class="dot"></span>
-        Security: single session • no manual balance edits • address-only transfers
-      </footer>
-    </div>
-  </section>
-
-  <!-- APP -->
-  <section id="appRoot" class="wrap hidden">
-    <div class="shell app-shell">
-      <header class="topbar">
-        <div class="brand">
-          <div class="logo"></div>
-          <div class="brand-text">
-            <div class="brand-title">LORD 2.0</div>
-            <div class="brand-sub">USDT Transfers • 1 TX = 1 Block</div>
-          </div>
-        </div>
-
-        <div class="top-actions">
-          <button id="btnLogout" class="btn ghost" type="button">Logout</button>
-        </div>
-      </header>
-
-      <main class="grid">
+    <!-- APP -->
+    <section id="appRoot" class="section hidden">
+      <div class="grid">
         <!-- Dashboard -->
-        <section class="card dashboard">
-          <div class="card-head">
+        <div id="dashCard" class="card">
+          <div class="cardHead">
             <div>
-              <h2>Dashboard</h2>
-              <div class="muted">
-                ID: <span id="mePublicId">—</span> • <span id="meEmail">—</span>
-              </div>
+              <div class="h1">Dashboard</div>
+              <div id="meLine" class="sub">—</div>
             </div>
-
-            <div class="pill">
-              <span id="meStatus">—</span>
-            </div>
+            <div id="statusPill" class="pill">ACTIVE</div>
           </div>
 
-          <div class="dash-row">
+          <div class="dashRow">
             <div class="stat">
-              <div class="label">Balance</div>
-              <div id="meBalance" class="value">—</div>
-              <div class="unit">USDT</div>
+              <div class="k">Balance</div>
+              <div id="balance" class="v">0.00000000</div>
+              <div class="u">USDT</div>
             </div>
 
-            <div class="address">
-              <div class="label">Address</div>
-              <div class="addr-row">
-                <div id="meAddress" class="addr">—</div>
-                <button id="btnCopyAddress" class="btn small ghost" type="button">Copy</button>
+            <div class="addr">
+              <div class="k">Address</div>
+              <div class="addrRow">
+                <div id="address" class="mono">—</div>
+                <button id="copyAddress" class="btn btnSmall btnGhost" type="button">Copy</button>
               </div>
+              <div class="mini">Transfers only by address</div>
             </div>
           </div>
-        </section>
+        </div>
 
         <!-- Send -->
-        <section class="card send">
-          <div class="card-head">
+        <div class="card">
+          <div class="cardHead">
             <div>
-              <h2>Send USDT</h2>
-              <div class="muted">Transfer by address only</div>
+              <div class="h1">Send USDT</div>
+              <div class="sub">Transfer by address only</div>
             </div>
           </div>
 
-          <form id="sendForm" class="form-stack">
-            <label class="field">
-              <span>Receiver address</span>
-              <input id="sendTo" type="text" placeholder="LORD_..." required />
-            </label>
+          <form id="sendForm" class="form">
+            <label class="lbl">Receiver address</label>
+            <input id="recvAddress" class="inp mono" type="text" placeholder="LORD_..." required />
 
-            <label class="field">
-              <span>Amount (USDT)</span>
-              <input id="sendAmount" type="number" inputmode="decimal" step="0.00000001" min="0.00000001" placeholder="10.5" required />
-            </label>
+            <label class="lbl">Amount (USDT)</label>
+            <input id="amount" class="inp" type="number" step="0.00000001" min="0" placeholder="10.5" required />
 
-            <button class="btn primary wide" type="submit">Send</button>
-            <div id="sendMsg" class="msg"></div>
+            <button class="btn btnPrimary" type="submit">Send</button>
+            <div id="sendHint" class="hint2 hidden"></div>
           </form>
-        </section>
+        </div>
 
         <!-- Explorer -->
-        <section class="card explorer">
-          <div class="card-head">
+        <div class="card">
+          <div class="cardHead">
             <div>
-              <h2>Explorer</h2>
-              <div class="muted">Check any tx_hash</div>
+              <div class="h1">Explorer</div>
+              <div class="sub">Check any tx_hash</div>
             </div>
           </div>
 
-          <form id="explorerForm" class="form-stack">
-            <label class="field">
-              <span>TX Hash</span>
-              <input id="explorerHash" type="text" placeholder="TX_..." required />
-            </label>
-
-            <button class="btn primary wide" type="submit">Check</button>
+          <form id="explorerForm" class="form">
+            <label class="lbl">TX Hash</label>
+            <input id="txHash" class="inp mono" type="text" placeholder="TX_..." required />
+            <button class="btn btnPrimary" type="submit">Check</button>
           </form>
 
-          <pre id="explorerResult" class="result">—</pre>
-        </section>
+          <pre id="explorerOut" class="out">—</pre>
+        </div>
 
         <!-- History -->
-        <section class="card history">
-          <div class="card-head">
+        <div class="card wide">
+          <div class="cardHead">
             <div>
-              <h2>History</h2>
-              <div class="muted">Visible only to involved users</div>
+              <div class="h1">History</div>
+              <div class="sub">Visible only to involved users</div>
             </div>
           </div>
 
-          <div class="table-wrap">
-            <table class="table">
+          <div class="tableWrap">
+            <table class="tbl">
               <thead>
                 <tr>
                   <th>Dir</th>
@@ -195,18 +153,27 @@
                   <th>TX</th>
                 </tr>
               </thead>
-              <tbody id="historyBody"></tbody>
+              <tbody id="historyBody">
+                <tr><td colspan="6" class="muted">—</td></tr>
+              </tbody>
             </table>
           </div>
-        </section>
-      </main>
+        </div>
 
-      <footer class="footnote">
-        <span class="dot"></span>
-        Tip: If CSS doesn’t change, hard refresh (Ctrl+F5) or open in Incognito.
-      </footer>
-    </div>
-  </section>
+        <!-- Admin (if needed by app.js) -->
+        <div id="adminBlock" class="card wide hidden">
+          <div class="cardHead">
+            <div>
+              <div class="h1">Admin</div>
+              <div class="sub">Users / Transactions / Logs</div>
+            </div>
+          </div>
+          <pre id="adminOut" class="out">—</pre>
+        </div>
+
+      </div>
+    </section>
+  </main>
 
   <script src="/app.js?v=20260302d"></script>
 </body>
