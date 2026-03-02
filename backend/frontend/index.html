@@ -1,58 +1,165 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>LORD 2.0</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>LORD 2.0</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <div class="bg"></div>
 
-<div class="app-container">
+  <div id="toast" class="toast hidden"></div>
 
-    <div class="topbar">
-        <h1>LORD 2.0 — USDT Transfers</h1>
-        <button class="logout-btn">Logout</button>
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo"></div>
+      <div class="brandText">
+        <div class="brandTitle">LORD 2.0</div>
+        <div class="brandSub">USDT Transfers • 1 TX = 1 Block</div>
+      </div>
     </div>
 
-    <div class="dashboard-grid">
+    <button id="btnLogout" class="btn ghost hidden">Logout</button>
+  </header>
 
-        <!-- BALANCE -->
-        <div class="card">
-            <h2>Balance</h2>
-            <div class="balance-value">0.00 USDT</div>
-        </div>
+  <main class="shell">
+    <!-- AUTH -->
+    <section id="authCard" class="card auth hidden">
+      <div class="cardHead">
+        <div class="cardTitle">Welcome</div>
+        <div class="cardSub">Login or create a new account</div>
+      </div>
 
-        <!-- ADDRESS -->
+      <div class="tabs">
+        <button id="tabLogin" class="tab active" type="button">Login</button>
+        <button id="tabRegister" class="tab" type="button">Register</button>
+      </div>
+
+      <form id="loginForm" class="form">
+        <label class="label">Email</label>
+        <input id="loginEmail" class="input" type="email" placeholder="you@gmail.com" required />
+
+        <label class="label">Password</label>
+        <input id="loginPassword" class="input" type="password" placeholder="••••••••" required />
+
+        <button class="btn primary" type="submit">Login</button>
+      </form>
+
+      <form id="registerForm" class="form hidden">
+        <label class="label">Email</label>
+        <input id="regEmail" class="input" type="email" placeholder="you@gmail.com" required />
+
+        <label class="label">Password</label>
+        <input id="regPassword" class="input" type="password" placeholder="Create a strong password" required />
+
+        <button class="btn primary" type="submit">Create account</button>
+      </form>
+
+      <div id="authHint" class="hint"></div>
+    </section>
+
+    <!-- DASH -->
+    <section id="dashCard" class="dash hidden">
+      <div class="grid">
+        <!-- LEFT: Dashboard -->
         <div class="card">
-            <h2>Your Address</h2>
-            <p>LORD_xxxxxxxxxxxxxxxxx</p>
+          <div class="cardHeadRow">
+            <div>
+              <div class="cardTitle">Dashboard</div>
+              <div id="meLine" class="cardSub mono">ID: —</div>
+            </div>
+            <div id="statusPill" class="pill">—</div>
+          </div>
+
+          <div class="stats">
+            <div class="stat">
+              <div class="statLabel">Balance</div>
+              <div class="statValue"><span id="balance">0</span></div>
+              <div class="statUnit">USDT</div>
+            </div>
+
+            <div class="stat wide">
+              <div class="statLabel">Address</div>
+              <div class="addrRow">
+                <div id="address" class="mono addr">LORD_...</div>
+                <button id="copyAddress" class="btn mini" type="button">Copy</button>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- SEND -->
         <div class="card">
-            <h2>Send USDT</h2>
-            <input type="text" placeholder="Receiver address">
-            <input type="number" placeholder="Amount (USDT)">
-            <button class="primary-btn">Send</button>
+          <div class="cardTitle">Send USDT</div>
+          <div class="cardSub">Transfer by address only</div>
+
+          <form id="sendForm" class="form">
+            <label class="label">Receiver address</label>
+            <input id="recvAddress" class="input mono" type="text" placeholder="LORD_..." required />
+
+            <label class="label">Amount (USDT)</label>
+            <input id="amount" class="input" type="number" step="0.00000001" min="0" placeholder="10.5" required />
+
+            <button class="btn primary" type="submit">Send</button>
+          </form>
+
+          <div id="sendHint" class="hint"></div>
         </div>
 
         <!-- EXPLORER -->
         <div class="card">
-            <h2>Explorer</h2>
-            <input type="text" placeholder="TX Hash">
-            <button class="primary-btn">Check</button>
+          <div class="cardTitle">Explorer</div>
+          <div class="cardSub">Check any tx_hash</div>
+
+          <form id="explorerForm" class="form">
+            <label class="label">TX Hash</label>
+            <input id="txHash" class="input mono" type="text" placeholder="TX_..." required />
+            <button class="btn primary" type="submit">Check</button>
+          </form>
+
+          <pre id="explorerOut" class="out">—</pre>
         </div>
 
-    </div>
+        <!-- HISTORY -->
+        <div class="card col2">
+          <div class="cardHeadRow">
+            <div>
+              <div class="cardTitle">History</div>
+              <div class="cardSub">Visible only to involved users</div>
+            </div>
+          </div>
 
-    <!-- HISTORY -->
-    <div class="card history">
-        <h2>Transaction History</h2>
-        <p>No transactions yet</p>
-    </div>
+          <div class="table">
+            <div class="row head">
+              <div>Dir</div>
+              <div>Counterparty</div>
+              <div>Amount</div>
+              <div>Time</div>
+              <div>Status</div>
+              <div>TX</div>
+            </div>
+            <div id="historyBody" class="tbody"></div>
+          </div>
+        </div>
 
-</div>
+        <!-- ADMIN -->
+        <div id="adminBlock" class="card col2 hidden">
+          <div class="cardTitle">Admin</div>
+          <div class="cardSub">Read-only JSON panels</div>
 
-<script src="app.js"></script>
+          <div class="admin-tabs">
+            <button class="btn mini" type="button" data-a="users">Users</button>
+            <button class="btn mini" type="button" data-a="txs">Transactions</button>
+            <button class="btn mini" type="button" data-a="logs">System Logs</button>
+          </div>
+
+          <pre id="adminOut" class="out">—</pre>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
 </body>
 </html>
