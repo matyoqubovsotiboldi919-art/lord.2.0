@@ -6,7 +6,7 @@
   <title>LORD BLOCKCHAIN</title>
 
   <!-- cache bust -->
-  <link rel="stylesheet" href="/styles.css?v=20260303a" />
+  <link rel="stylesheet" href="/styles.css?v=20260513a" />
 </head>
 <body>
   <div class="bg"></div>
@@ -38,16 +38,20 @@
       <form id="loginForm" class="form">
         <label>Email</label>
         <input id="loginEmail" type="email" autocomplete="email" placeholder="you@gmail.com" required />
+
         <label>Password</label>
         <input id="loginPassword" type="password" autocomplete="current-password" placeholder="••••••••" required />
+
         <button class="btn primary" type="submit">Login</button>
       </form>
 
       <form id="registerForm" class="form hidden">
         <label>Email</label>
         <input id="regEmail" type="email" autocomplete="email" placeholder="you@gmail.com" required />
+
         <label>Password</label>
         <input id="regPassword" type="password" autocomplete="new-password" placeholder="Min 6 chars" required />
+
         <button class="btn primary" type="submit">Create account</button>
       </form>
 
@@ -106,32 +110,45 @@
           </form>
         </div>
 
-        <!-- Explorer -->
-        <div class="card">
-          <div class="h2">Explorer</div>
-          <div class="sub">Check any tx_hash</div>
+        <!-- Explorer Scan -->
+        <div class="card span2">
+          <div class="h2">Explorer Scan</div>
+          <div class="sub">Check account balance, last activity and transactions by wallet address</div>
 
           <form id="explorerForm" class="form compact">
-            <label>TX Hash</label>
-            <input id="txHash" type="text" class="mono" placeholder="TX_..." required />
+            <label>Wallet address</label>
+            <input id="explorerAddress" type="text" class="mono" placeholder="LORD_..." required />
             <button class="btn primary" type="submit">Check</button>
           </form>
 
-          <pre id="explorerOut" class="out">-</pre>
+          <div id="explorerOut" class="out">-</div>
+
+          <div class="tableHead txTable">
+            <div>From</div>
+            <div>To</div>
+            <div>Amount</div>
+            <div>Time</div>
+            <div>Status</div>
+            <div>TX Hash</div>
+          </div>
+
+          <div id="explorerTxBody" class="tableBody">
+            <!-- explorer address transactions injected by app.js -->
+          </div>
         </div>
 
         <!-- History -->
         <div class="card span2">
           <div class="h2">History</div>
-          <div class="sub">Visible only to involved users</div>
+          <div class="sub">All confirmed system transactions</div>
 
-          <div class="tableHead">
-            <div>Dir</div>
-            <div>Counterparty</div>
+          <div class="tableHead txTable">
+            <div>From</div>
+            <div>To</div>
             <div>Amount</div>
             <div>Time</div>
             <div>Status</div>
-            <div>TX</div>
+            <div>TX Hash</div>
           </div>
 
           <div id="historyBody" class="tableBody">
@@ -142,18 +159,20 @@
         <!-- Admin -->
         <div id="adminBlock" class="card span2 hidden">
           <div class="h2">Admin</div>
+
           <div class="admin-tabs">
             <button class="btn ghost tiny" type="button" data-a="users">Users</button>
             <button class="btn ghost tiny" type="button" data-a="txs">Transactions</button>
             <button class="btn ghost tiny" type="button" data-a="logs">Logs</button>
           </div>
+
           <pre id="adminOut" class="out">-</pre>
         </div>
       </div>
     </section>
   </main>
 
-  <script src="/config.js?v=20260303a"></script>
-  <script src="/app.js?v=20260303a"></script>
+  <script src="/config.js?v=20260513a"></script>
+  <script src="/app.js?v=20260513a"></script>
 </body>
 </html>

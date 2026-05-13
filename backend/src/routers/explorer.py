@@ -1,18 +1,18 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from ..core.db import get_db
 from ..models.transaction import Transaction
 from ..models.block import Block
 from ..models.user import User
-from ..schemas.explorer import ExplorerTxOut
+from ..schemas.explorer import ExplorerTxOut, ExplorerAddressOut, ExplorerAddressTxRow
 from ..services.tx import mask_address
 from ..services.security import decode_token, require_active_session
 
 router = APIRouter(prefix="/api/v1/explorer", tags=["explorer"])
 
-# OPTIONAL auth (token bo‘lmasa ham ishlaydi)
 auth_optional = HTTPBearer(auto_error=False)
 
 
@@ -71,4 +71,41 @@ def explorer_tx(
         prev_hash=blk.prev_hash,
         sender=sender,
         receiver=receiver,
+    )
+
+
+@router.get("/address/{address}", response_model=ExplorerAddressOut)
+def explorer_address(address: str, db: Session = Depends(get_db)):
+    address = address.strip()
+    if not address:
+        raise HTTPException(status_code=400, detail="Address is required")
+
+    user = db.query(User).filter(User.address == address).first()
+
+    rows = (
+        db.query(Transaction)
+        .filter(or_(Transaction.sender_address == address, Transaction.receiver_address == address))
+        .order_by(Transaction.created_at.desc())
+        .limit(500)
+        .all()
+    )
+
+    last_active = rows[0].created_at.isoformat() if rows else None
+
+    return ExplorerAddressOut(
+        address=address,
+        exists=bool(user),
+        balance_usdt=str(user.balance_usdt) if user else "0",
+        last_active=last_active,
+        transactions=[
+            ExplorerAddressTxRow(
+                from_address=t.sender_address,
+                to_address=t.receiver_address,
+                amount_usdt=str(t.amount_usdt),
+                created_at=t.created_at.isoformat(),
+                status=t.status,
+                tx_hash=t.tx_hash,
+            )
+            for t in rows
+        ],
     )

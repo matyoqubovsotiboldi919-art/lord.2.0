@@ -5,7 +5,7 @@ from ..core.db import get_db
 from ..models.transaction import Transaction
 from ..models.user import User
 from ..schemas.tx import TransferIn, TxRow
-from ..services.tx import transfer, mask_address
+from ..services.tx import transfer
 from .users import get_current_user
 
 router = APIRouter(prefix="/api/v1/tx", tags=["transactions"])
@@ -35,29 +35,19 @@ def do_transfer(payload: TransferIn, db: Session = Depends(get_db), me: User = D
 def history(db: Session = Depends(get_db), me: User = Depends(get_current_user)):
     rows = (
         db.query(Transaction)
-        .filter((Transaction.sender_user_id == me.id) | (Transaction.receiver_user_id == me.id))
         .order_by(Transaction.created_at.desc())
-        .limit(200)
+        .limit(500)
         .all()
     )
 
-    out: list[TxRow] = []
-    for t in rows:
-        if str(t.sender_user_id) == str(me.id):
-            direction = "OUT"
-            counterparty = mask_address(t.receiver_address)
-        else:
-            direction = "IN"
-            counterparty = mask_address(t.sender_address)
-
-        out.append(
-            TxRow(
-                direction=direction,
-                counterparty=counterparty,
-                amount_usdt=str(t.amount_usdt),
-                created_at=t.created_at.isoformat(),
-                status=t.status,
-                tx_hash=t.tx_hash,
-            )
+    return [
+        TxRow(
+            from_address=t.sender_address,
+            to_address=t.receiver_address,
+            amount_usdt=str(t.amount_usdt),
+            created_at=t.created_at.isoformat(),
+            status=t.status,
+            tx_hash=t.tx_hash,
         )
-    return out
+        for t in rows
+    ]

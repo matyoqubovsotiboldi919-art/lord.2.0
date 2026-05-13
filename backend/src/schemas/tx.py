@@ -3,12 +3,12 @@ from pydantic import BaseModel, Field
 
 class TransferIn(BaseModel):
     receiver_address: str = Field(min_length=8, max_length=128)
-    amount_usdt: str  # Decimal string
+    amount_usdt: str
 
 
 class TxRow(BaseModel):
-    direction: str  # IN/OUT
-    counterparty: str
+    from_address: str
+    to_address: str
     amount_usdt: str
     created_at: str
     status: str

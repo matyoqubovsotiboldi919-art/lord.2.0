@@ -272,3 +272,45 @@ input:focus{
   .dashRow{grid-template-columns: 1fr;}
   .balance{font-size: 30px;}
 }
+.txTable{
+  grid-template-columns: 1.35fr 1.35fr .6fr 1fr .6fr 1.35fr;
+}
+
+.empty{
+  padding: 12px;
+  border-radius: 12px;
+  border:1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.03);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.scanGrid{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.scanItem{
+  padding: 12px;
+  border-radius: 12px;
+  border:1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.03);
+}
+
+.scanValue{
+  margin-top: 4px;
+  font-size: 13px;
+  color: rgba(255,255,255,.88);
+  word-break: break-all;
+}
+
+@media (max-width: 980px){
+  .txTable{
+    grid-template-columns: 1fr;
+  }
+
+  .scanGrid{
+    grid-template-columns: 1fr;
+  }
+}
