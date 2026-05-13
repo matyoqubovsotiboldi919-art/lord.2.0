@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import String, DateTime, Numeric, Text
+from sqlalchemy import String, DateTime, Numeric, Text, Integer
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
 
@@ -18,8 +18,15 @@ class User(Base):
     address: Mapped[str] = mapped_column(String(128), unique=True, nullable=False)
 
     balance_usdt: Mapped[float] = mapped_column(Numeric(20, 8), nullable=False, server_default="0")
-    status: Mapped[str] = mapped_column(String(16), nullable=False, server_default="ACTIVE")  # ACTIVE|FROZEN|LOCKED
-    role: Mapped[str] = mapped_column(String(16), nullable=False, server_default="USER")     # USER|ADMIN
+
+    # ACTIVE | FROZEN | LOCKED
+    status: Mapped[str] = mapped_column(String(16), nullable=False, server_default="ACTIVE")
+
+    # USER | ADMIN
+    role: Mapped[str] = mapped_column(String(16), nullable=False, server_default="USER")
+
+    failed_login_count: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
+    locked_until: Mapped[DateTime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     last_login_at: Mapped[DateTime | None] = mapped_column(DateTime(timezone=True), nullable=True)

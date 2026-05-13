@@ -43,6 +43,7 @@ def startup():
         return
 
     db: Session = SessionLocal()
+
     try:
         existing = db.query(User).filter(User.email == settings.ADMIN_EMAIL).first()
 
@@ -51,7 +52,11 @@ def startup():
             existing.password_hash = hash_password(settings.ADMIN_PASSWORD)
             existing.role = "ADMIN"
             existing.status = "ACTIVE"
+            existing.failed_login_count = 0
+            existing.locked_until = None
+
             db.commit()
+
             print("[startup] Admin already exists -> password synced, role/status ensured")
             return
 
@@ -63,13 +68,17 @@ def startup():
             address="TEMP",
             role="ADMIN",
             status="ACTIVE",
+            failed_login_count=0,
+            locked_until=None,
         )
+
         db.add(u)
         db.flush()  # to get u.id
 
         # unique public_id retry
         for _ in range(20):
             pid = new_public_id()
+
             if not db.query(User).filter(User.public_id == pid).first():
                 u.public_id = pid
                 break
@@ -77,9 +86,12 @@ def startup():
         u.address = hmac_address(u.id)
 
         db.commit()
+
         print("[startup] Admin created")
+
     except Exception as e:
         db.rollback()
         print("[startup] Admin seed error:", repr(e))
+
     finally:
         db.close()
